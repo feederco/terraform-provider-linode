@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/btobolaski/linodego"
+	"log"
+
+	"github.com/appscode/linodego"
 	"github.com/hashicorp/terraform/helper/schema"
 	"golang.org/x/crypto/sha3"
-	"log"
 )
 
 const (
@@ -119,6 +120,11 @@ func resourceLinodeLinodeRead(d *schema.ResourceData, meta interface{}) error {
 	linodes, err := client.Linode.List(int(id))
 	if err != nil {
 		return fmt.Errorf("Failed to find the specified linode because %s", err)
+	}
+	if len(linodes.Linodes) == 0 {
+		d.Set("status", "tainted")
+		d.SetPartial("status")
+		return nil
 	}
 	linode := linodes.Linodes[0]
 	public, private, err := getIps(client, int(id))
@@ -447,7 +453,10 @@ func getKernelID(client *linodego.Client, kernelName string) (int, error) {
 // getKernelList populates kernelList with all of the available kernels. kernelList is purely to reduce the number of
 // api calls as the available kernels are unlikely to change within a single terraform run.
 func getKernelList(client *linodego.Client) error {
-	kernels, err := client.Avail.Kernels()
+	urlParams := make(map[string]string)
+	urlParams["isKVM"] = "1"
+	urlParams["isXen"] = "0"
+	kernels, err := client.Avail.Kernels(urlParams)
 	if err != nil {
 		return err
 	}

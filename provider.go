@@ -3,7 +3,7 @@ package linode
 import (
 	"fmt"
 
-	"github.com/btobolaski/linodego"
+	"github.com/appscode/linodego"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -30,7 +30,7 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	client := linodego.NewClient(d.Get("key").(string), nil)
 
-	_, err := client.Avail.Kernels()
+	_, err := client.Avail.Kernels(nil)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to the linode api because %s", err)
 	}
